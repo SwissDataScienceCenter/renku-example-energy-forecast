@@ -1,7 +1,5 @@
 # renku-example-energy-forecast
 
-# Energy consumption
-
 Forecast daily electricity consumption in a **Renku Job**, and explore it in a public **Streamlit App**.
 
 This repo walks you through submitting a **Renku Job** (non-interactive run) and publishing a **Renku App** (public web app).
