@@ -112,7 +112,7 @@ The app is a Streamlit dashboard with a period filter, KPIs, the daily series wi
 1. Make sure the Renku project is **public**. If not, go to Project Settings and change it. 
 2. Add a launcher of type **App** → **Create from code** → this repository. Renku builds an image based on the requirements in the code repository, and it knows how to start the app based on the `Procfile`.
 3. Click **Start** and wait until the status is *Live*. Then click **Open**.
-4. To share your app, click the drop down menu on the App Launcher's *Open* button and click **Copy share link**. This shares the app's 'lobby' URL, so that if the viewer opens a "sleeping" app they see a nice loading screen instead of a blank page. Try sharing your link with someone else, and test out how quickly the app loads!
+4. To share your app, click the drop down menu on the App Launcher's *Open* button and click **Copy share link**. This shares the app's 'lobby' URL, so that if the viewer opens a "sleeping" app they see a nice loading screen instead of a blank page.
 
 ## Run locally
 
