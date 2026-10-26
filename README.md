@@ -1,4 +1,4 @@
-# renku-example-energy-forecast
+# Energy forecast: Jobs & Apps example
 
 Forecast daily electricity consumption in a **Renku Job**, and explore it in a public **Streamlit App**.
 
@@ -17,11 +17,11 @@ This repo walks you through submitting a **Renku Job** (non-interactive run) and
 
 ## Step 1: Set up your Renku project
 
-1. Fork this code repository.
+1. (Optional) Fork this code repository, if you want to change the code.
 2. Create a new project in [Renku](https://renkulab.io), set it to **public** (required later for the app!), and add the following to your Renku project:
    - **Data connector with input data**: In the data section, click the plus button, paste the following data identifier, and click 'Link': `renku-team/energy-consumption-forecast/energy-input-data`.
-   - **Code repository**: Connect your fork of this repo. In the code section, click the plus button and paste this repo's fork url. 
-   - **Storage for job results (Optional)**: Choose either option from *Where to keep job results* below. If you don't choose one of those options, the job will not simply save its results, which is not realistic but is ok for the purposes of this project.
+   - **Code repository**: In the code section, click the plus button and paste this repo's fork url (or your fork's url from 1.). 
+   - **Storage for job results (Optional)**: Choose either option from *Where to keep job results* below. If you don't choose one of those options, the job will not save its results, which is not realistic but is ok for the purposes of this project.
    - **Session launcher**: In the Launchers section, click the plus button, click 'Session Launcher' and choose *Create from code*. Choose the interface of your choice and finish creating the launcher. This will create a session environment using the requirements defined in the code repository. [Learn more](https://docs.renkulab.io/en/latest/docs/users/compute/environment/guides/create-environment-with-custom-packages-installed/)
 3. Once you create the launcher, the environment will start building. The first build takes a few minutes. You can do Step 2- set up the CLI- while it builds. If you're brand new to Renku, you can launch the session once the image builds and take a look at the code and data interactively. 
 
@@ -88,7 +88,7 @@ Full reference: [Renku CLI](https://docs.renkulab.io/en/latest/docs/users/cli/cl
    ```json
    ["--horizon", "28", "--alpha", "10"]
    ```
-5. Jobs don't keep files. Logs disappear when a job is dismissed, and finished jobs are removed after ~24 h. To keep results, write them to the storage you set up in *Preparation*, using either of these:
+5. Jobs don't keep files. Logs disappear when a job is dismissed, and finished jobs are removed after ~24 h. To keep results, write them to the storage you set up in *Where to keep job results*, using either of these:
    - the argument `--out <mount path>`, e.g. `["--horizon", "7", "--out", "/home/renku/work/<connector-target-path>"]`
    - an [environment variable](https://docs.renkulab.io/en/latest/docs/users/compute/session/guides/share-session-launch-link/#make-launch-links-even-smarter-with-environment-variables) on the job launcher: `OUTPUT_DIR` = your mount path. `--out` overrides it if both are set.
 
@@ -116,6 +116,8 @@ The app is a Streamlit dashboard with a period filter, KPIs, the daily series wi
 
 ## Run locally
 
+Download to your computer the .csv file from the data connector folder within your session. Keep the folder structure in your local laptop or ensure the path in model.py points to the local folder where the data is saved.
+
 ```bash
 pip install -r requirements.txt
 python train.py --horizon 7
@@ -133,7 +135,7 @@ streamlit run src/app.py --server.port 8000
 
 ## Data
 
-`consumption.csv` is **synthetic**, generated with realistic seasonality (winter peak, weekends lower, temperature-driven heating). It is not real grid data. To use real data, write a CSV with the columns `date, consumption_gwh, temperature_c`.
+`consumption.csv` is **synthetic**, generated with realistic seasonality (winter peak, weekends lower, temperature-driven heating). It is not real grid data. To use real data, write a CSV with the columns `date, consumption_gwh, temperature_c`. It is saved in the data connector associated with the Renku project.
 
 ## Docs
 
