@@ -2,11 +2,12 @@
 from pathlib import Path
 
 import numpy as np
+import os
 import pandas as pd
 from sklearn.linear_model import Ridge
 
-DATA = Path(__file__).resolve().parent.parent.parent / "energy-input-data" / "consumption.csv"
-
+RENKU_BASE_DIRECTORY = os.environ.get("RENKU_BASE_URL_PATH")
+DATA=os.path.join(RENKU_BASE_DIRECTORY,"home","renku","work", "energy-input-data", "consumption.csv")
 
 def load(path=DATA):
     df = pd.read_csv(path, parse_dates=["date"])
