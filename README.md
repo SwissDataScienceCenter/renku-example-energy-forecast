@@ -1,8 +1,8 @@
-# Energy forecast: Jobs & Apps example
+# Energy consumption
 
 Forecast daily electricity consumption in a **Renku Job**, and explore it in a public **Streamlit App**.
 
-This repo walks you through submitting a **Renku Job** (non-interactive run) and publishing a **Renku App** (public web app).
+This repo supports a Renku **hands-on workshop** and will walk you through **interactive sessions**, submitting a **Renku Job** (non-interactive run) and publishing a **Renku App** (public web app) from this repo.
 
 > **Data rule:** Renku apps run only on **public** projects, so make sure to create a public Renku project. 
 
@@ -17,13 +17,13 @@ This repo walks you through submitting a **Renku Job** (non-interactive run) and
 
 ## Step 1: Set up your Renku project
 
-1. (Optional) Fork this code repository, if you want to change the code.
+1. Fork this code repository `https://github.com/bethcg/renku-workshop-energy-forecasting`.
 2. Create a new project in [Renku](https://renkulab.io), set it to **public** (required later for the app!), and add the following to your Renku project:
    - **Data connector with input data**: In the data section, click the plus button, paste the following data identifier, and click 'Link': `renku-team/energy-consumption-forecast/energy-input-data`.
-   - **Code repository**: In the code section, click the plus button and paste this repo's fork url (or your fork's url from 1.). 
-   - **Storage for job results (Optional)**: Choose either option from *Where to keep job results* below. If you don't choose one of those options, the job will not save its results, which is not realistic but is ok for the purposes of this project.
+   - **Code repository**: Connect your fork of this repo. In the code section, click the plus button and paste this repo's clone url: `https://github.com/bethcg/renku-workshop-energy-forecasting.git` 
+   - **Storage for job results (Optional)**: Choose either option from *Where to keep job results* below. If you don't choose one of those options, the job will not simply save its results, which is not realistic but is ok for the purposes of this exercise.
    - **Session launcher**: In the Launchers section, click the plus button, click 'Session Launcher' and choose *Create from code*. Choose the interface of your choice and finish creating the launcher. This will create a session environment using the requirements defined in the code repository. [Learn more](https://docs.renkulab.io/en/latest/docs/users/compute/environment/guides/create-environment-with-custom-packages-installed/)
-3. Once you create the launcher, the environment will start building. The first build takes a few minutes. You can do Step 2- set up the CLI- while it builds. If you're brand new to Renku, you can launch the session once the image builds and take a look at the code and data interactively. 
+3. Once you create the launcher, the environment will start building. The first build takes a few minutes. You can do Step 5 - set up the CLI - while it builds. You can launch the session once the image builds and take a look at the code and data interactively. 
 
 ### Where to keep job results
 
@@ -32,11 +32,94 @@ Jobs have no persistent disk of their own, so results must go to storage that is
 | Option | How to get it | Access | Notes |
 | --- | --- | --- | --- |
 | **Data connector to a PolyBox / SWITCHdrive shared folder** | [Connect a shared folder](https://docs.renkulab.io/en/latest/docs/users/data/guides/connect-data/connect-shared-switchdrive-or-polybox-folder-to-project/) with **read/write** permissions | Needs your credentials when the job starts | Results also show up in your PolyBox / SWITCHdrive |
-| **Renku project storage** | Contact the Renku team to get beta access to project storage, then create it from the new tab in the data connector menu | Owners and editors read/write; viewers read-only; **anonymous users have no access, even on public projects** | Mounted in every session and job of the project; shared with project members; persists across pauses and shutdowns |
+| **Renku project storage** | In beta: talk to a workshop host to get beta access to project storage, then create it from the new tab in the data connector menu | Owners and editors read/write; viewers read-only; **anonymous users have no access, even on public projects** | Mounted in every session and job of the project; shared with project members; persists across pauses and shutdowns |
 
 The **App can read the public input data, but not the private output data**. Apps only mount public, credential-free data connectors, and anonymous app visitors have no access to project storage.
 
-## Step 2: Set up the `rnk` CLI
+## Step 2: Work in an interactive session
+
+A session stands for an interactive workspace on RenkuLab: the code repository and the input data are already there, in an environment built from `requirements.txt`. You develop and test your code here, then the job (Step 3) and the app (Step 4) run the same code without you.
+
+1. **Launch the session.** On your project page, click **Launch** on the session launcher you created in Step 1. The first start takes a minute or two. When it opens, you are in JupyterLab or VS Code, depending on the interface you chose.
+
+2. **Find your code and data.** Open a terminal (JupyterLab: *File → New → Terminal*; VS Code: *Terminal → New Terminal*) and run:
+   ```bash
+   cd /home/renku/work
+   ls                                      # your code repository and energy-input-data, side by side
+   head energy-input-data/consumption.csv  # columns: date, consumption_gwh, temperature_c
+   ```
+   The code repository is cloned into the session. The data connector is mounted, not copied: you read the data where it lives.
+
+3. **Explore the data in a notebook.** Create a new notebook in `/home/renku/work` and run:
+   ```python
+   import sys
+   sys.path.insert(0, "/home/renku/work/renku-workshop-energy-forecasting/src")
+   from model import load, fit_and_forecast
+
+   df = load()  # or load("/home/renku/work/energy-input-data/consumption.csv")
+   df.set_index("date")[["consumption_gwh", "temperature_c"]].plot(subplots=True, figsize=(10, 5))
+   ```
+   Then try the forecast with different regularisation strengths and compare the errors:
+   ```python
+   for alpha in [0.1, 1, 10]:
+       forecast, mae = fit_and_forecast(df, horizon=14, alpha=alpha)
+       print(f"alpha={alpha}: MAE = {mae:.2f} GWh/day")
+   ```
+   This is the same model the job and the app use (`src/model.py`).
+
+4. **Run the job script by hand.** In the terminal, run exactly what the job will run in Step 3:
+   ```bash
+   python renku-workshop-energy-forecasting/train.py --horizon 7
+   ```
+   Note the line `[4/4] Wrote ...`: inside a session the CSV lands in `outputs/`. A job has no disk of its own, which is why Step 3 writes results to a data connector.
+
+5. **Change the code and push it** (needs your fork and a GitHub account connected in RenkuLab *Integrations*). If you do not have the fork or GitHub integration skip this step; as the rest of the tutorial still works. Open `train.py`, change the default of `--horizon` from `7` to `14`, then:
+   ```bash
+   cd /home/renku/work/renku-workshop-energy-forecasting
+   git add train.py
+   git commit -m "Use a 14-day horizon by default"
+   git push
+   ```
+
+6. **Pause or shut down.** In RenkuLab, open the session menu:
+   - **Pause** keeps your files in `/home/renku/work`; resume later and continue where you left off.
+   - **Shut down** deletes the session. Anything not pushed to git or saved in a data connector is lost.
+
+   Pause your session now. You don't need it for the job or the app.
+
+## Step 3: Run a Job
+
+### In the Renku UI
+
+1. In your Renku project, add a launcher of type **Job**.
+2. Choose **Create from code**, select the code repository `renku-workshop-energy-forecasting`, and set the command to:
+   ```json
+   ["python", "renku-workshop-energy-forecasting/train.py"]
+   ```
+   Set the job args to:
+   ```json
+   ["--horizon", "7"]
+   ```
+   Each flag and each value is its own list item. Writing `["--horizon 7"]` passes a single argument and the script fails.
+3. Click **Submit**, keep the default resource class, and open the logs.
+4. Submit again with different arguments and a bigger resource class:
+   ```json
+   ["--horizon", "28", "--alpha", "10"]
+   ```
+5. Jobs don't keep files. Logs disappear when a job is dismissed, and finished jobs are removed after ~24 h. To keep results, write them to the storage you set up in *Preparation*, using either of these:
+   - the argument `--out <mount path>`, e.g. `["--horizon", "7", "--out", "/home/renku/work/<connector-target-path>"]`
+   - an [environment variable](https://docs.renkulab.io/en/latest/docs/users/compute/session/guides/share-session-launch-link/#make-launch-links-even-smarter-with-environment-variables) on the job launcher: `OUTPUT_DIR` = your mount path. `--out` overrides it if both are set.
+
+## Step 4: Create an App
+
+The app is a Streamlit dashboard with a period filter, KPIs, the daily series with a 7-day average, and a forecast check.
+
+1. Make sure the Renku project is **public**. If not, go to Project Settings and change it. 
+2. Add a launcher of type **App** → **Create from code** → this repository. Renku builds an image based on the requirements in the code repository, and it knows how to start the app based on the `Procfile`.
+3. Click **Start** and wait until the status is *Live*. Then click **Open**.
+4. To share your app, click the drop down menu on the App Launcher's *Open* button and click **Copy share link**. This shares the app's 'lobby' URL, so that if the viewer opens a "sleeping" app they see a nice loading screen instead of a blank page. Try sharing your link with someone else, and test out how quickly the app loads!
+
+## Step 5 (optional): Set up the `rnk` CLI
 
 The `rnk` CLI lets you start and follow jobs (and sessions) from your terminal. Install it on your laptop, not inside a session.
 
@@ -56,7 +139,7 @@ The `rnk` CLI lets you start and follow jobs (and sessions) from your terminal. 
    ```bash
    rnk login
    ```
-4. **Select your Renku project**, so you don't need to pass it to every command:
+4. **Select your workshop project**, so you don't need to pass it to every command:
    ```bash
    rnk project list                                # find your project
    rnk project activate <namespace>/<project-slug> # start typing your project name and tab complete!
@@ -67,56 +150,25 @@ The `rnk` CLI lets you start and follow jobs (and sessions) from your terminal. 
    rnk launcher list
    ```
 
+6. **Run the job from Step 3** from the CLI
+   ```bash
+
+      rnk launcher list --mode non-interactive          # copy the ID of your job launcher
+      rnk job start --launcher <launcher-id> --wait -- --horizon 14
+      rnk job list                                      # all your jobs and their IDs
+      rnk job logs <job-id>                             # logs of a finished job
+   ```
+
+   - `--wait` streams the logs until the job ends (Ctrl-C stops following; the job keeps running).
+   - Everything after `--` replaces the launcher's job args for this run only.
+   - `--command` overrides the launcher's command, and `--submission-id <name>` gives the run a readable name.
+
+
 Full reference: [Renku CLI](https://docs.renkulab.io/en/latest/docs/users/cli/cli-reference/).
 
-## Step 3: Run a Job
 
-### In the Renku UI
-
-1. In your Renku project, add a launcher of type **Job**.
-2. Choose **Create from code**, select the code repository, and set the command to:
-   ```json
-   ["python", "renku-example-energy-forecast/train.py"]
-   ```
-   Set the job args to:
-   ```json
-   ["--horizon", "7"]
-   ```
-   Each flag and each value is its own list item. Writing `["--horizon 7"]` passes a single argument and the script fails.
-3. Click **Submit**, keep the default resource class, and open the logs.
-4. Submit again with different arguments and a bigger resource class:
-   ```json
-   ["--horizon", "28", "--alpha", "10"]
-   ```
-5. Jobs don't keep files. Logs disappear when a job is dismissed, and finished jobs are removed after ~24 h. To keep results, write them to the storage you set up in *Where to keep job results*, using either of these:
-   - the argument `--out <mount path>`, e.g. `["--horizon", "7", "--out", "/home/renku/work/<connector-target-path>"]`
-   - an [environment variable](https://docs.renkulab.io/en/latest/docs/users/compute/session/guides/share-session-launch-link/#make-launch-links-even-smarter-with-environment-variables) on the job launcher: `OUTPUT_DIR` = your mount path. `--out` overrides it if both are set.
-
-### The same job from the CLI
-
-```bash
-rnk launcher list --mode non-interactive          # copy the ID of your job launcher
-rnk job start --launcher <launcher-id> --wait -- --horizon 14
-rnk job list                                      # all your jobs and their IDs
-rnk job logs <job-id>                             # logs of a finished job
-```
-
-- `--wait` streams the logs until the job ends (Ctrl-C stops following; the job keeps running).
-- Everything after `--` replaces the launcher's job args for this run only.
-- `--command` overrides the launcher's command, and `--submission-id <name>` gives the run a readable name.
-
-## Step 4: Create an App
-
-The app is a Streamlit dashboard with a period filter, KPIs, the daily series with a 7-day average, and a forecast check.
-
-1. Make sure the Renku project is **public**. If not, go to Project Settings and change it. 
-2. Add a launcher of type **App** → **Create from code** → this repository. Renku builds an image based on the requirements in the code repository, and it knows how to start the app based on the `Procfile`.
-3. Click **Start** and wait until the status is *Live*. Then click **Open**.
-4. To share your app, click the drop down menu on the App Launcher's *Open* button and click **Copy share link**. This shares the app's 'lobby' URL, so that if the viewer opens a "sleeping" app they see a nice loading screen instead of a blank page.
 
 ## Run locally
-
-Download to your computer the .csv file from the data connector folder within your session. Keep the folder structure in your local laptop or ensure the path in model.py points to the local folder where the data is saved.
 
 ```bash
 pip install -r requirements.txt
@@ -135,7 +187,7 @@ streamlit run src/app.py --server.port 8000
 
 ## Data
 
-`consumption.csv` is **synthetic**, generated with realistic seasonality (winter peak, weekends lower, temperature-driven heating). It is not real grid data. To use real data, write a CSV with the columns `date, consumption_gwh, temperature_c`. It is saved in the data connector associated with the Renku project.
+`consumption.csv` is **synthetic**, generated with realistic seasonality (winter peak, weekends lower, temperature-driven heating). It is not real Swiss grid data. To use real data, write a CSV with the columns `date, consumption_gwh, temperature_c` (e.g. from [opendata.swiss](https://opendata.swiss)).
 
 ## Docs
 
