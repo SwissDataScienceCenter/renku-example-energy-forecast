@@ -1,6 +1,6 @@
 # Energy consumption forecast
 
-This repo will walk you through setting up a **project in Renku**, working in **interactive sessions**, submitting a **Renku Job** (non-interactive run) and publishing a **Renku App** (public web app).
+This repo will walk you through setting up a **project in Renku**, working in an **interactive session**, submitting a **Renku Job** (non-interactive run) and publishing a **Renku App** (public web app).
 
 ## What's inside this repository
 
