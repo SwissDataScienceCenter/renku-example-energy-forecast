@@ -166,7 +166,8 @@ The `rnk` CLI lets you start and follow jobs (and sessions) from your terminal. 
    - `--command` overrides the launcher's command, and `--submission-id <name>` gives the run a readable name.
 
 
-Full reference: [Renku CLI](https://docs.renkulab.io/en/latest/docs/users/cli/cli-reference/).
+> [!TIPP]
+> Full reference: [Renku CLI](https://docs.renkulab.io/en/latest/docs/users/cli/cli-reference/).
 
 
 ## Run locally
